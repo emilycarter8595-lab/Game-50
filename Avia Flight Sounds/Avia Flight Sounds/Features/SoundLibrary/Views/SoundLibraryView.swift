@@ -82,15 +82,7 @@ struct SoundCardView: View {
             .cornerRadius(24)
             
             // Main Card Content
-            Button(action: {
-                if offset != 0 {
-                    withAnimation(.spring()) {
-                        offset = 0
-                    }
-                } else {
-                    onCardTap()
-                }
-            }) {
+            ZStack {
                 HStack(spacing: 16) {
                     HStack(spacing: 12) {
                         Image(sound.iconName)
@@ -131,11 +123,21 @@ struct SoundCardView: View {
                         .stroke(sound.isPlaying ? DesignSystem.Colors.playingStroke : Color.clear, lineWidth: 2)
                 )
             }
-            .buttonStyle(PlainButtonStyle())
+            .contentShape(Rectangle()) // Ensure tap works on whole area
+            .onTapGesture {
+                if offset != 0 {
+                    withAnimation(.spring()) {
+                        offset = 0
+                    }
+                } else {
+                    onCardTap()
+                }
+            }
             .offset(x: offset)
-            .highPriorityGesture(
-                DragGesture(minimumDistance: 10)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 20)
                     .onChanged { gesture in
+                        // Only handle horizontal swipes
                         if abs(gesture.translation.width) > abs(gesture.translation.height) {
                             if gesture.translation.width < 0 {
                                 offset = gesture.translation.width
@@ -145,7 +147,8 @@ struct SoundCardView: View {
                     .onEnded { gesture in
                         if abs(gesture.translation.width) > abs(gesture.translation.height) {
                             withAnimation(.spring()) {
-                                if gesture.translation.width < -40 {
+                                // Check for flick (predicted) or sufficient distance
+                                if gesture.predictedEndTranslation.width < -30 || gesture.translation.width < -30 {
                                     offset = -80
                                 } else {
                                     offset = 0

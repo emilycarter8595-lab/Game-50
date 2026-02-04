@@ -137,6 +137,21 @@ struct SoundPlayerView: View {
             VStack(spacing: 12) {
                 Slider(value: $durationMinutes, in: 1...120, step: 1)
                     .accentColor(DesignSystem.Colors.tabSelected)
+                    .onChange(of: durationMinutes) { newValue in
+                        viewModel.updateTimer(for: sound.id, minutes: Int(newValue))
+                    }
+                    .onAppear {
+                        if let saved = sound.savedTimerMinutes {
+                            durationMinutes = Double(saved)
+                        }
+                    }
+                    .onChange(of: sound.id) { _ in
+                        if let saved = sound.savedTimerMinutes {
+                            durationMinutes = Double(saved)
+                        } else {
+                            durationMinutes = 30
+                        }
+                    }
                 
                 HStack {
                     Text("0h 01m")

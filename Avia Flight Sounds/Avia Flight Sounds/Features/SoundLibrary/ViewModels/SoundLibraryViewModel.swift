@@ -32,12 +32,15 @@ class SoundLibraryViewModel: ObservableObject {
     private var timerCancellable: AnyCancellable?
     private var countdownCancellable: AnyCancellable?
     
+    private let favoritesKey = "UserFavorites_v1"
+    
     var selectedSound: SoundElement? {
         guard let id = selectedSoundId else { return nil }
         return sounds.first { $0.id == id }
     }
     
     init() {
+        loadFavorites()
         startTimer()
     }
     
@@ -69,6 +72,9 @@ class SoundLibraryViewModel: ObservableObject {
             sounds[index].isPlaying = !wasPlaying
             
             if sounds[index].isPlaying {
+                // Sync Player Tab
+                selectedSoundId = soundID
+                
                 elapsedSeconds = 0
                 SoundService.shared.playSound(sounds[index].fileName)
                 
@@ -78,6 +84,20 @@ class SoundLibraryViewModel: ObservableObject {
                 SoundService.shared.stopSound()
                 stopCountdown()
             }
+        }
+    }
+    
+    func updateTimer(for soundID: UUID, minutes: Int) {
+        if let index = sounds.firstIndex(where: { $0.id == soundID }) {
+            // Update the source of truth
+            sounds[index].savedTimerMinutes = minutes
+            
+            // If this sound is currently playing, update the active countdown
+            if sounds[index].isPlaying {
+                // We restart the countdown with the new duration, but we don't restart playback
+                startCountdown(for: soundID, minutes: minutes)
+            }
+            saveFavorites()
         }
     }
     
@@ -107,6 +127,40 @@ class SoundLibraryViewModel: ObservableObject {
             sounds[index].isFavorite.toggle()
             if sounds[index].isFavorite && withTimerMinutes != nil {
                 sounds[index].savedTimerMinutes = withTimerMinutes
+            }
+            saveFavorites()
+        }
+    }
+    
+    // MARK: - Persistence
+    private func saveFavorites() {
+        // Map: FileName -> TimerMinutes (Int?)
+        var favoritesMap: [String: Int?] = [:]
+        
+        for sound in sounds where sound.isFavorite {
+            favoritesMap[sound.fileName] = sound.savedTimerMinutes
+        }
+        
+        if let data = try? JSONEncoder().encode(favoritesMap) {
+            UserDefaults.standard.set(data, forKey: favoritesKey)
+        }
+    }
+    
+    private func loadFavorites() {
+        guard let data = UserDefaults.standard.data(forKey: favoritesKey),
+              let favoritesMap = try? JSONDecoder().decode([String: Int?].self, from: data) else {
+            return
+        }
+        
+        for i in 0..<sounds.count {
+            let fileName = sounds[i].fileName
+            if let _ = favoritesMap[fileName] { // Key exists means it was favorite (even if value is nil)
+                sounds[i].isFavorite = true
+                // Determine if the dictionary actually contains a value for the key
+                // Checking keys explicitly is safer given 'Int?' value
+                if favoritesMap.keys.contains(fileName) {
+                    sounds[i].savedTimerMinutes = favoritesMap[fileName] ?? nil
+                }
             }
         }
     }

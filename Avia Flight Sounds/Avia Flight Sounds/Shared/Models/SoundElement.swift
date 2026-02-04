@@ -1,6 +1,6 @@
 import Foundation
 
-struct SoundElement: Identifiable {
+struct SoundElement: Identifiable, Codable, Equatable {
     let id = UUID()
     let title: String
     let duration: String

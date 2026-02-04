@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import MediaPlayer
 
 class SoundService {
     static let shared = SoundService()
@@ -7,11 +8,35 @@ class SoundService {
     private var currentFileName: String?
     
     private init() {
+        setupAudioSession()
+        setupRemoteCommands()
+    }
+    
+    private func setupAudioSession() {
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("Failed to set audio session category: \(error)")
+        }
+    }
+    
+    private func setupRemoteCommands() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+        
+        commandCenter.playCommand.addTarget { [weak self] _ in
+            self?.audioPlayer?.play()
+            return .success
+        }
+        
+        commandCenter.pauseCommand.addTarget { [weak self] _ in
+            self?.audioPlayer?.pause()
+            return .success
+        }
+        
+        commandCenter.stopCommand.addTarget { [weak self] _ in
+            self?.stopSound()
+            return .success
         }
     }
     
@@ -21,6 +46,7 @@ class SoundService {
         
         if currentFileName == filename && audioPlayer != nil {
             audioPlayer?.play()
+            setupNowPlaying(filename: filename)
             return
         }
         
@@ -35,6 +61,7 @@ class SoundService {
             audioPlayer?.numberOfLoops = -1 // Loop infinitely
             audioPlayer?.play()
             currentFileName = filename
+            setupNowPlaying(filename: filename)
         } catch {
             print("Could not play sound file: \(error)")
         }
@@ -44,9 +71,24 @@ class SoundService {
         audioPlayer?.stop()
         audioPlayer = nil
         currentFileName = nil
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
     
     func pauseSound() {
         audioPlayer?.pause()
+        // Update playback rate to 0 in MPNowPlayingInfoCenter if needed
+    }
+    
+    private func setupNowPlaying(filename: String) {
+        var nowPlayingInfo = [String: Any]()
+        nowPlayingInfo[MPMediaItemPropertyTitle] = filename // Or better title if available
+        nowPlayingInfo[MPMediaItemPropertyArtist] = "Avia Flight Sounds"
+        
+        if let player = audioPlayer {
+             nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = player.duration
+             nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = player.currentTime
+        }
+        
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
     }
 }
