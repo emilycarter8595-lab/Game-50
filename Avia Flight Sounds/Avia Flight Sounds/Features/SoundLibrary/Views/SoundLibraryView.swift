@@ -96,7 +96,7 @@ struct SoundCardView: View {
                             Text(sound.title)
                                 .font(DesignSystem.Fonts.poppinsSemibold(size: 17))
                                 .foregroundColor(.white)
-                            Text(sound.isPlaying ? viewModel.formattedElapsedTime : sound.duration)
+                            Text(sound.duration)
                                 .font(DesignSystem.Fonts.poppinsRegular(size: 15))
                                 .foregroundColor(DesignSystem.Colors.textSecondary)
                         }
@@ -123,7 +123,7 @@ struct SoundCardView: View {
                         .stroke(sound.isPlaying ? DesignSystem.Colors.playingStroke : Color.clear, lineWidth: 2)
                 )
             }
-            .contentShape(Rectangle()) // Ensure tap works on whole area
+            .contentShape(Rectangle())
             .onTapGesture {
                 if offset != 0 {
                     withAnimation(.spring()) {
@@ -137,7 +137,6 @@ struct SoundCardView: View {
             .simultaneousGesture(
                 DragGesture(minimumDistance: 20)
                     .onChanged { gesture in
-                        // Only handle horizontal swipes
                         if abs(gesture.translation.width) > abs(gesture.translation.height) {
                             if gesture.translation.width < 0 {
                                 offset = gesture.translation.width
@@ -147,7 +146,6 @@ struct SoundCardView: View {
                     .onEnded { gesture in
                         if abs(gesture.translation.width) > abs(gesture.translation.height) {
                             withAnimation(.spring()) {
-                                // Check for flick (predicted) or sufficient distance
                                 if gesture.predictedEndTranslation.width < -30 || gesture.translation.width < -30 {
                                     offset = -80
                                 } else {

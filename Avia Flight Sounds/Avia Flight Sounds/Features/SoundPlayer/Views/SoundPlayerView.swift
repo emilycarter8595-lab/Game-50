@@ -5,6 +5,7 @@ struct SoundPlayerView: View {
     @EnvironmentObject var viewModel: SoundLibraryViewModel
     @State private var durationMinutes: Double = 30
     @State private var rotationAngle: Double = 0
+    @State private var isInitializingSlider: Bool = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -27,7 +28,6 @@ struct SoundPlayerView: View {
     private var headerView: some View {
         HStack {
             Spacer()
-            // ...
             Text(sound.title)
                 .font(DesignSystem.Fonts.poppinsBold(size: 22))
                 .foregroundColor(.white)
@@ -138,18 +138,28 @@ struct SoundPlayerView: View {
                 Slider(value: $durationMinutes, in: 1...120, step: 1)
                     .accentColor(DesignSystem.Colors.tabSelected)
                     .onChange(of: durationMinutes) { newValue in
-                        viewModel.updateTimer(for: sound.id, minutes: Int(newValue))
+                        if !isInitializingSlider {
+                            viewModel.updateTimer(for: sound.id, minutes: Int(newValue))
+                        }
                     }
                     .onAppear {
+                        isInitializingSlider = true
                         if let saved = sound.savedTimerMinutes {
                             durationMinutes = Double(saved)
                         }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isInitializingSlider = false
+                        }
                     }
                     .onChange(of: sound.id) { _ in
+                        isInitializingSlider = true
                         if let saved = sound.savedTimerMinutes {
                             durationMinutes = Double(saved)
                         } else {
                             durationMinutes = 30
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isInitializingSlider = false
                         }
                     }
                 

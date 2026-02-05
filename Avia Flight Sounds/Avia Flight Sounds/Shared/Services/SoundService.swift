@@ -76,12 +76,11 @@ class SoundService {
     
     func pauseSound() {
         audioPlayer?.pause()
-        // Update playback rate to 0 in MPNowPlayingInfoCenter if needed
     }
     
     private func setupNowPlaying(filename: String) {
         var nowPlayingInfo = [String: Any]()
-        nowPlayingInfo[MPMediaItemPropertyTitle] = filename // Or better title if available
+        nowPlayingInfo[MPMediaItemPropertyTitle] = filename
         nowPlayingInfo[MPMediaItemPropertyArtist] = "Avia Flight Sounds"
         
         if let player = audioPlayer {

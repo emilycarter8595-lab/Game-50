@@ -72,7 +72,6 @@ class SoundLibraryViewModel: ObservableObject {
             sounds[index].isPlaying = !wasPlaying
             
             if sounds[index].isPlaying {
-                // Sync Player Tab
                 selectedSoundId = soundID
                 
                 elapsedSeconds = 0
@@ -89,12 +88,9 @@ class SoundLibraryViewModel: ObservableObject {
     
     func updateTimer(for soundID: UUID, minutes: Int) {
         if let index = sounds.firstIndex(where: { $0.id == soundID }) {
-            // Update the source of truth
             sounds[index].savedTimerMinutes = minutes
             
-            // If this sound is currently playing, update the active countdown
             if sounds[index].isPlaying {
-                // We restart the countdown with the new duration, but we don't restart playback
                 startCountdown(for: soundID, minutes: minutes)
             }
             saveFavorites()
@@ -132,9 +128,7 @@ class SoundLibraryViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Persistence
     private func saveFavorites() {
-        // Map: FileName -> TimerMinutes (Int?)
         var favoritesMap: [String: Int?] = [:]
         
         for sound in sounds where sound.isFavorite {
@@ -154,10 +148,8 @@ class SoundLibraryViewModel: ObservableObject {
         
         for i in 0..<sounds.count {
             let fileName = sounds[i].fileName
-            if let _ = favoritesMap[fileName] { // Key exists means it was favorite (even if value is nil)
+            if let _ = favoritesMap[fileName] {
                 sounds[i].isFavorite = true
-                // Determine if the dictionary actually contains a value for the key
-                // Checking keys explicitly is safer given 'Int?' value
                 if favoritesMap.keys.contains(fileName) {
                     sounds[i].savedTimerMinutes = favoritesMap[fileName] ?? nil
                 }
