@@ -48,7 +48,6 @@ struct SoundLibraryView: View {
 
 struct SoundCardView: View {
     let sound: SoundElement
-    @EnvironmentObject var viewModel: SoundLibraryViewModel
     let onCardTap: () -> Void
     let onPlayToggle: () -> Void
     let onLikeToggle: () -> Void
