@@ -92,14 +92,9 @@ struct SoundCardView: View {
                             .foregroundColor(sound.isPlaying ? DesignSystem.Colors.playingStroke : DesignSystem.Colors.tabSelected)
                             .frame(width: 26, height: 26)
                         
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(sound.title)
-                                .font(DesignSystem.Fonts.poppinsSemibold(size: 17))
-                                .foregroundColor(.white)
-                            Text(sound.duration)
-                                .font(DesignSystem.Fonts.poppinsRegular(size: 15))
-                                .foregroundColor(DesignSystem.Colors.textSecondary)
-                        }
+                        Text(sound.title)
+                            .font(DesignSystem.Fonts.poppinsSemibold(size: 17))
+                            .foregroundColor(.white)
                     }
                     
                     Spacer()
